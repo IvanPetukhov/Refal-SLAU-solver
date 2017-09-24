@@ -1,0 +1,178 @@
+SLAU START
+ EXTRN Cp, Rp
+ EXTRN ADD, MUL, SUB, DR, DIV
+ EXTRN Br, Dg
+ EXTRN PRINT, PROUT
+ EXTRN Opnget, Clsget, CARD, Libget
+ EXTRN NUMB
+ ENTRY go
+
+go  = <fout<same1<out<sort1<var<sint<lex<Libget<Opnget <CARD 'File to open: '>>>>>>>>>><Clsget>
+ 
+same1 (e1)'?'e2 = (e1)'?'<same e2>
+
+lex s(L)Ae1'='e2';'e3 = /1/sA<lex e1>'='<lex e2>';'<lex e3>
+ e1s(L)Ae2'='e3';'e4 = <lex e1>sA<lex e2>'='<lex e3>';'<lex e4>
+ e1'='e3s(L)Ae2';'e4 = <lex e1>'='<lex e3>sA<lex e2>';'<lex e4>
+ e1s(L)Ae2 = <lex e1>sA<lex e2>
+ ' 'e1 = 
+ '+' = /1/
+ '-' = '-'/1/
+  = 
+ e('0123456789')1 = <NUMB e1>
+ e1 = <compute <pr <strtonum e1>>>
+			
+strtonum  = 
+ '+'e('0123456789')1 = <NUMB e1>
+ '-'e('0123456789')1 = <NUMB '-'e1>
+ e('0123456789')1 = <NUMB e1>
+ e1s('+-*/()')Ae2 = <strtonum e1>sA<strtonum e2>
+  = 
+			
+pr e1')'e2 = <pr <pr1 e1> e2>
+ e1'('e2 = <PRINT 'ERROR: INCORRECT INPUT'>
+ e1 = e1
+			
+pr1 R e1'('e2 = e1(e2)
+ e1 = <PRINT 'ERROR: INCORRECT INPUT'>
+
+compute '-'e1 = '-'<compute e1>
+ '+'e1 = <compute e1>
+ R e1'+'e(('-'))2 = <Plus (<compute e1>) <compute e2>>
+ R e1'-'e2 = <Minus (<compute e1>) <compute e2>>
+ e1 = <comp_mul e1>
+  = 
+			 
+comp_mul R e1'*'e(('/'))2 = <multiply (<comp_mul e1>) <comp_mul e2>>
+ R e1'/'e2 = <divide (<comp_mul e1>) <comp_mul e2>>
+ s(N)A = sA
+ (e1) = <compute e1>
+			
+Plus (e1'/'e2)e3'/'e4 = <reduce (<ADD (<MUL (e1) e4>) <MUL (e3) e2>>) <MUL (e2) e4>>
+ (e1'/'e2)e3 = <reduce (<ADD (e1) <MUL (e2) e3>>) e2>
+ (e1)e2'/'e3 = <reduce (<ADD (<MUL (e1) e3>) e2>) e3>
+ (e1)e2 = <ADD (e1)e2>
+
+Minus (e1'/'e2)e3'/'e4 = <reduce (<SUB (<MUL (e1) e4>) <MUL (e3) e2>>) <MUL (e2) e4>>
+ (e1'/'e2)e3 = <reduce (<SUB (e1) <MUL (e2) e3>>) e2>
+ (e1)e2'/'e3 = <reduce (<SUB (<MUL (e1) e3>) e2>) e3>
+ (e1)e2 = <SUB (e1) e2>
+			
+multiply (e1'/'e2)e3'/'e4 = <reduce (<MUL (e1) e3>) <MUL (e2) e4>>
+ (e1'/'e2)e3 = <reduce (<MUL (e1) e3>) e2>
+ (e1)e2'/'e3 = <reduce (<MUL (e1) e2>) e3>
+ (e1)e2 = <MUL (e1) e2>
+			
+divide (/0/)e1 = /0/
+ (e1'/'e2)e3'/'e4 = <reduce (<MUL (e1) e4>) <MUL (e2) e3>>
+ (e1'/'e2)e3 = <reduce (e1) <MUL (e2) e3>>
+ (e1)e2'/'e3 = <reduce (<MUL (e1) e3>) e2>
+ (e1)e2 = <reduce (e1) e2>
+
+reduce (e1)/1/ = e1
+ (e1)e2 = <red1 <DIV (e1) <nod (e1)/0/(e2)>>'/'<DIV (e2) <nod (e1)/0/(e2)>> (<nod (e1)/0/(e2)>)>
+			
+red1 e1'/'e2(/1/) = e1'/'e2
+ e1'/'e2(e3) = <reduce (e1) e2>
+			
+nod (e1)e2(/0/) = e1
+ (e1)e2(e3) = <nod (e3)<Dr(e1) e3>>
+			
+sint e1';'e2 = <sint e1>';'<sint e2>
+ e1'='e2s(L)Ae3 = <neg <sint e1>>(e2sA)<sint e3>
+ e1s(L)Ae2'='e3 = (e1sA)<sint e2><neg <sint e3>>
+ e1s(L)Ae2 = (e1sA)<sint e2>
+  = 
+ e1 = (e1)
+
+var (e1s(L)A)e2 = <v1 (sA)'?'e2>(e1sA)e2
+ (e((L))1)e2 = <v1 ()'?'e2>(e1)e2
+ 
+v1 (e3)'?'e1';'e2 = <v1 (e3)'?'e1e2>
+ (e1s(L)Ae2)'?'e3(e4sA)e5 = <v1 (e1sAe2)'?'e3e5>
+ ()'?'e1(e2s(L)A)e3 = <v1 (sA)'?'e3>
+ (e1s(L)Ae2)'?'e3(e4s(L)B)e5 = <v1 (e1sAsBe2)'?'e5>
+ (e1)'?'e2 = (e1)'?'
+
+sort1 (e1)'?'e2 = (e1)'?'<sort e2>
+
+sort e1';'e2 = <clean <equation <ins e1>>';'<sort e2>>
+  = 
+
+clean ';'e1 = <clean e1>
+ e1';;'e2 = e1';'<clean e2>
+ e1 = e1
+ 
+ins e1(e2s(L)A)e3(e4sA)e5 = <ins e1(<Plus (e2) e4>sA)e3e5>
+ e1(e((L))2)e3(e((L))4)e5 = <ins e1(<Plus (e2) e4>)e3e5>
+ (e1)e2 = <same <check e1><ins e2>>
+  = 
+
+same e1(e2s(L)A)e3(e4sA)e5 = <same e1(<Plus (e2) e4>sA)e3e5>
+ e1(e((L))2)e3(e((L))4)e5 = <same e1(<Plus (e2) e4>)e3e5>
+ e1 = e1
+
+check e1(e2s(L)A)e3(e4sA)e5 = <check e1(<Plus (e2) e4>sA)e3e5>
+ e1(e((L))2)e3(e((L))4)e5 = <check e1(<Plus (e2) e4>)e3e5>
+ e1s(L)A = <koef (e1)<Cp sA>(sA)>
+ e(N'-/')1 = (e1)
+  = 
+
+koef (e1)(sA) = (e1sA)
+ (e1)e2(sA) = <ins <mul_m(e1) e2>>
+
+mul_m (e1)(e2s(L)A)e3 = (<multiply (e1) e2>sA)<mul_m (e1) e3>
+ (e1)(e((L))2)e3 = (<multiply (e1) e2>)<mul_m (e1) e3>
+ (e1) = 
+
+equation (/0/) = 
+ e1(/0/s(L)A)e2 = <equation e1e2>
+ e1(e2s(L)A)e3 = (/1/sA)<div_m (e2) e1e3><BR sA'='<neg <div_m (e2) e1e3>>>
+ (e1) = <PRINT 'SYSTEM HAS NO SOLUTIONS'>
+
+div_m (e1)(e2s(L)A)e3 = (<divide (e2) e1>sA)<div_m (e1) e3>
+ (e1)(e2)e3 = (<divide (e2) e1>)<div_m (e1) e3>
+ (e1) = 
+
+neg (e1s(L)A)e2 = (<Minus (/0/) e1>sA)<neg e2>
+ (e1)e2 = (<Minus (/0/) e1>)<neg e2>
+  = 
+ 
+out R (e1)'?'e2';'e3';' = (e1)'?'<put e3><out1 e2';'>
+ (e1)'?'e2';' = (e1)'?'<put e2>
+ ()'?' = ()'?'
+ (e1)'?' = (e1)'?'
+  = 
+  
+out1 R e2';'e3';' = <put e3><out1 e2';'>
+ e2';' = <put e2>
+  = 
+
+put (/1/s(L)A)(e((L))1) = (/1/sA)(e1)
+ (/1/s(L)A)e1 = (/1/sA)e1<Rp sA'='<neg <ins e1>>>
+  = 
+ 
+fout (e3)'?'(e1s(L)A)e2 = <prnt (sA)<Cp sA>><fout <find sA(e3)>'?'e2>
+ (e3)'?'(e((L))1)e2 = <fout (e3)'?'e2>
+ ()'?' = 
+ (e1)'?' = <prntunrest e1>
+ 
+prntunrest sAe1 = <PRINT sA' IS AN UNRESTRICTED VARIABLE'><prntunrest e1>
+  = 
+
+find sA(e1sAe2) = (e1e2)
+ sAe1 = e1
+
+prnt (sA) = <PRINT sA' IS AN UNRESTRICTED VARIABLE'>
+ (sA)e1 = <PRINT sA' = ' <write '!'e1>>
+ 
+write '!'(/0/) = /0/
+ '!'(/1/s(L)A)e2 = sA<write e2>
+ '!'(e1)e2 = e1<write e2>
+ (/0/)e2 = <write e2>
+ (/1/s(L)A)e2 = ' + 'sA<write e2>
+ ('-'e1)e2 = ' - 'e1<write e2>
+ (e1)e2 = ' + 'e1<write e2>
+  = 
+
+ END
